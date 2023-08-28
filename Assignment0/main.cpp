@@ -1,3 +1,4 @@
+#define _USE_MATH_DEFINES
 #include<cmath>
 #include<eigen3/Eigen/Core>
 #include<eigen3/Eigen/Dense>
@@ -40,9 +41,17 @@ int main(){
     std::cout << "Example of output \n";
     std::cout << i << std::endl;
     // matrix add i + j
+    std::cout << i + j << std::endl;
     // matrix scalar multiply i * 2.0
+    std::cout << i * 2.0f << std::endl;
     // matrix multiply i * j
+    std::cout << i * j << std::endl;
     // matrix multiply vector i * v
+    std::cout << i * v << std::endl;
 
+    Eigen::Vector3f P(2.0f, 1.0f, 1.0f);
+    Eigen::Matrix3f trans;
+    trans << cos(M_PI / 4), -sin(M_PI / 4), 1, sin(M_PI / 4), cos(M_PI / 4), 2, 0, 0, 1;
+    std::cout << trans * P << std::endl;
     return 0;
 }
