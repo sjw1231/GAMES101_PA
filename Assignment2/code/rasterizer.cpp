@@ -43,6 +43,21 @@ auto to_vec4(const Eigen::Vector3f& v3, float w = 1.0f)
 static bool insideTriangle(int x, int y, const Vector3f* _v)
 {   
     // TODO : Implement this function to check if the point (x, y) is inside the triangle represented by _v[0], _v[1], _v[2]
+    Vector3f P(x + 0.5, y + 0.5, 1);
+
+    Vector3f AB = _v[1] - _v[0];
+    Vector3f BC = _v[2] - _v[1];
+    Vector3f CA = _v[0] - _v[2];
+
+    Vector3f AP = P - _v[0];
+    Vector3f BP = P - _v[1];
+    Vector3f CP = P - _v[2];
+
+    float z1 = AB.cross(AP).z();
+    float z2 = BC.cross(BP).z();
+    float z3 = CA.cross(CP).z();
+
+    return (z1 > 0 && z2 > 0 && z3 > 0) || (z1 < 0 && z2 < 0 && z3 < 0);
 }
 
 static std::tuple<float, float, float> computeBarycentric2D(float x, float y, const Vector3f* v)
@@ -107,7 +122,27 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
     auto v = t.toVector4();
     
     // TODO : Find out the bounding box of current triangle.
+    float aabb_minx = v[0].x();
+    float aabb_maxx = v[0].x();
+    float aabb_miny = v[0].y();
+    float aabb_maxy = v[0].y();
+
+    for (int i = 1; i < 3; ++i) {
+        aabb_minx = v[i].x() < aabb_minx ? v[i].x() : aabb_minx;
+        aabb_maxx = v[i].x() > aabb_maxx ? v[i].x() : aabb_maxx;
+        aabb_miny = v[i].y() < aabb_miny ? v[i].y() : aabb_miny;
+        aabb_maxy = v[i].y() > aabb_maxy ? v[i].y() : aabb_maxy;
+    }
+
     // iterate through the pixel and find if the current pixel is inside the triangle
+    for (int x = floor(aabb_minx); x < ceil(aabb_maxx + 1); ++x) {
+        for (int y = floor(aabb_miny); y < ceil(aabb_maxy + 1); ++y) {
+            if (!insideTriangle(x, y, t.v))
+                continue;
+
+            
+        }
+    }
 
     // If so, use the following code to get the interpolated z value.
     //auto[alpha, beta, gamma] = computeBarycentric2D(x, y, t.v);
