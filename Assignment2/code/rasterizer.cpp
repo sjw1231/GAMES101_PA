@@ -86,16 +86,26 @@ void rst::rasterizer::draw(pos_buf_id pos_buffer, ind_buf_id ind_buffer, col_buf
                 mvp * to_vec4(buf[i[1]], 1.0f),
                 mvp * to_vec4(buf[i[2]], 1.0f)
         };
+        // for (auto& vec : v) {
+        //     std::cout << vec.z() << std::endl;
+        // }
+        // std::cout << "-----------" << std::endl;
         //Homogeneous division
         for (auto& vec : v) {
             vec /= vec.w();
         }
+        // for (auto& vec : v) {
+        //     std::cout << vec.z() << std::endl;
+        // }
+        // std::cout << "-----------" << std::endl;
         //Viewport transformation
         for (auto & vert : v)
         {
             vert.x() = 0.5*width*(vert.x()+1.0);
             vert.y() = 0.5*height*(vert.y()+1.0);
+            // std::cout << vert.z() << std::endl;
             vert.z() = vert.z() * f1 + f2;
+            // std::cout << vert.z() << std::endl;
         }
 
         for (int i = 0; i < 3; ++i)
@@ -139,18 +149,20 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
         for (int y = floor(aabb_miny); y < ceil(aabb_maxy + 1); ++y) {
             if (!insideTriangle(x, y, t.v))
                 continue;
-
-            
+            // If so, use the following code to get the interpolated z value.
+            auto[alpha, beta, gamma] = computeBarycentric2D(x, y, t.v);
+            float w_reciprocal = 1.0/(alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
+            float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
+            z_interpolated *= w_reciprocal;  
+        
+            // TODO : set the current pixel (use the set_pixel function) to the color of the triangle (use getColor function) if it should be painted.
+            int buf_index = get_index(x, y);
+            if (z_interpolated < depth_buf[buf_index]) {
+                depth_buf[buf_index] = z_interpolated;
+                set_pixel(Vector3f(x, y, z_interpolated), t.getColor());
+            }
         }
     }
-
-    // If so, use the following code to get the interpolated z value.
-    //auto[alpha, beta, gamma] = computeBarycentric2D(x, y, t.v);
-    //float w_reciprocal = 1.0/(alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
-    //float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
-    //z_interpolated *= w_reciprocal;
-
-    // TODO : set the current pixel (use the set_pixel function) to the color of the triangle (use getColor function) if it should be painted.
 }
 
 void rst::rasterizer::set_model(const Eigen::Matrix4f& m)
