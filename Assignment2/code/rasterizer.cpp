@@ -80,24 +80,25 @@ void rst::rasterizer::draw(pos_buf_id pos_buffer, ind_buf_id ind_buffer, col_buf
     Eigen::Matrix4f mvp = projection * view * model;
     for (auto& i : ind)
     {
+        // std::cout << "Triangle ----------" << std::endl;
+
         Triangle t;
         Eigen::Vector4f v[] = {
                 mvp * to_vec4(buf[i[0]], 1.0f),
                 mvp * to_vec4(buf[i[1]], 1.0f),
                 mvp * to_vec4(buf[i[2]], 1.0f)
         };
+
         // for (auto& vec : v) {
-        //     std::cout << vec.z() << std::endl;
+        //     std::cout << vec.z() / vec.w() << std::endl;
         // }
-        // std::cout << "-----------" << std::endl;
+        // std::cout << "----------" << std::endl;
+
         //Homogeneous division
         for (auto& vec : v) {
             vec /= vec.w();
         }
-        // for (auto& vec : v) {
-        //     std::cout << vec.z() << std::endl;
-        // }
-        // std::cout << "-----------" << std::endl;
+
         //Viewport transformation
         for (auto & vert : v)
         {
@@ -157,7 +158,9 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
         
             // TODO : set the current pixel (use the set_pixel function) to the color of the triangle (use getColor function) if it should be painted.
             int buf_index = get_index(x, y);
+            z_interpolated = -z_interpolated;
             if (z_interpolated < depth_buf[buf_index]) {
+            // The screen is set at z infinity looking at -z direction, so larger z represents a nearer point. To avoid changing the init code for depth_buf in line 193, we compare the opposite number which means smaller is nearer.
                 depth_buf[buf_index] = z_interpolated;
                 set_pixel(Vector3f(x, y, z_interpolated), t.getColor());
             }

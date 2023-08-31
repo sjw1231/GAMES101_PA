@@ -31,15 +31,18 @@ Eigen::Matrix4f get_model_matrix(float rotation_angle)
 Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio, float zNear, float zFar)
 {
     // TODO: Copy-paste your implementation from the previous assignment.
-    Eigen::Vector4f p(2, 0, -2, 1);
+
+    // For consistency, we still scale the frustum to -z range to avoid mirroring
+    // Another way to handle the issue that the image is upside down is: ONLY set yTop as -zNear * tan(eye_fov / 2) since we need to guarantee that after dividing the homogeneous coordinate w which is MINUS in this case, yTop and xRight are still positive. If not, things will be upside down because every point after dividing w is just like being set to its central symmetric point about the origin.
+    zNear = -zNear;
+    zFar = -zFar;
+
     Eigen::Matrix4f projection;
     Eigen::Matrix4f persp2ortho;
     persp2ortho << zNear, 0, 0, 0,
                    0, zNear, 0, 0,
                    0, 0, zNear + zFar, -zNear * zFar,
                    0, 0, 1, 0;
-    p = persp2ortho * p;
-    std::cout << p.transpose() << std::endl;
     Eigen::Matrix4f ortho;
     eye_fov = eye_fov * MY_PI / 180;
     float yTop = abs(zNear) * tan(eye_fov / 2);
@@ -49,18 +52,14 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio, float z
              0, 1 / yTop, 0, 0,
              0, 0, 2 / (zNear - zFar), 0,
              0, 0, 0, 1;
-    p = get_view_matrix(translate) * p;
-    std::cout << p.transpose() << std::endl;
-    p = ortho * p;
-    std::cout << p.transpose() << std::endl;
     ortho = ortho * get_view_matrix(translate);
     projection = ortho * persp2ortho;
 
-    projection << zNear / xRight, 0, 0, 0, 
-                  0, zNear / yTop, 0, 0,
-                  0, 0, (zNear + zFar) / (zNear - zFar), -2 * zNear * zFar / (zNear - zFar),
-                  0, 0, 1, 0;
-    std::cout << projection << std::endl;
+    // projection matrix after simplification:
+    // projection << zNear / xRight, 0, 0, 0, 
+    //               0, zNear / yTop, 0, 0,
+    //               0, 0, (zNear + zFar) / (zNear - zFar), -2 * zNear * zFar / (zNear - zFar),
+    //               0, 0, 1, 0;
     return projection;
 }
 
@@ -120,7 +119,7 @@ int main(int argc, const char** argv)
 
         r.set_model(get_model_matrix(angle));
         r.set_view(get_view_matrix(eye_pos));
-        r.set_projection(get_projection_matrix(45, 1, -0.1, -50));
+        r.set_projection(get_projection_matrix(45, 1, 0.1, 50));
 
         r.draw(pos_id, ind_id, col_id, rst::Primitive::Triangle);
         cv::Mat image(700, 700, CV_32FC3, r.frame_buffer().data());
@@ -138,7 +137,7 @@ int main(int argc, const char** argv)
 
         r.set_model(get_model_matrix(angle));
         r.set_view(get_view_matrix(eye_pos));
-        r.set_projection(get_projection_matrix(45, 1, -0.1, -50));
+        r.set_projection(get_projection_matrix(45, 1, 0.1, 50));
 
         r.draw(pos_id, ind_id, col_id, rst::Primitive::Triangle);
 
