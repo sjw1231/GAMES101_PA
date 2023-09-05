@@ -5,7 +5,7 @@
 *.slo
 *.lo
 *.o
-*.obj
+# *.obj
 
 # Precompiled headers
 *.gch
@@ -27,7 +27,5 @@
 *.out
 *.app
 
-/.vscode
-*/.vscode/
-*/build/
-*/*/build/
+.vscode
+build

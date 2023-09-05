@@ -101,7 +101,8 @@ Eigen::Vector3f texture_fragment_shader(const fragment_shader_payload& payload)
     if (payload.texture)
     {
         // TODO: Get the texture value at the texture coordinates of the current fragment
-
+        // return_color = payload.texture->getColor(payload.tex_coords[0], payload.tex_coords[1]);
+        return_color = payload.texture->getColorBilinear(payload.tex_coords[0], payload.tex_coords[1]);
     }
     Eigen::Vector3f texture_color;
     texture_color << return_color.x(), return_color.y(), return_color.z();
@@ -129,7 +130,14 @@ Eigen::Vector3f texture_fragment_shader(const fragment_shader_payload& payload)
     {
         // TODO: For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
         // components are. Then, accumulate that result on the *result_color* object.
+        Vector3f l = (light.position - point).normalized();
+        Vector3f v = (eye_pos - point).normalized();
+        Vector3f intensity = light.intensity / (light.position - point).squaredNorm();
 
+        Vector3f ambient = ka.array() * amb_light_intensity.array();
+        Vector3f diffuse = kd.array() * intensity.array() * std::max(0.f, normal.dot(l));
+        Vector3f specular = ks.array() * intensity.array() * std::pow(std::max(0.f, normal.dot((v + l).normalized())), p);
+        result_color += ambient + diffuse + specular;
     }
 
     return result_color * 255.f;
@@ -159,7 +167,14 @@ Eigen::Vector3f phong_fragment_shader(const fragment_shader_payload& payload)
     {
         // TODO: For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
         // components are. Then, accumulate that result on the *result_color* object.
-        
+        Vector3f l = (light.position - point).normalized();
+        Vector3f v = (eye_pos - point).normalized();
+        Vector3f intensity = light.intensity / (light.position - point).squaredNorm();
+
+        Vector3f ambient = ka.array() * amb_light_intensity.array();
+        Vector3f diffuse = kd.array() * intensity.array() * std::max(0.f, normal.dot(l));
+        Vector3f specular = ks.array() * intensity.array() * std::pow(std::max(0.f, normal.dot((v + l).normalized())), p);
+        result_color += ambient + diffuse + specular;
     }
 
     return result_color * 255.f;
